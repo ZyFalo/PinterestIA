@@ -1,0 +1,15 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Entorno
+.env
+.env.local
+
+# Node
+node_modules/
+.next/
+
+# Sistema
+.DS_Store

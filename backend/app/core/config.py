@@ -1,0 +1,1 @@
+# Settings (variables de entorno)
