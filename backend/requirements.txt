@@ -5,10 +5,11 @@ asyncpg
 alembic
 pydantic-settings
 python-jose[cryptography]
-passlib[bcrypt]
+bcrypt
 httpx
-google-generativeai
+google-genai
 playwright
 Pillow
 cloudinary
 python-multipart
+email-validator
