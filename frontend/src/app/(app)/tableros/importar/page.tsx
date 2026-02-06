@@ -43,8 +43,8 @@ export default function ImportarPage() {
         <div className="flex gap-3 bg-[#F8F8F8] rounded-xl p-4">
           <Info className="w-5 h-5 text-accent-red flex-shrink-0 mt-0.5" />
           <p className="text-[13px] text-text-secondary leading-relaxed">
-            Asegúrate de que el tablero sea público. La URL debe tener el
-            formato: pinterest.com/usuario/tablero
+            Asegúrate de que el tablero sea público. Puedes usar el enlace
+            completo (pinterest.com/usuario/tablero) o el enlace corto (pin.it/...)
           </p>
         </div>
 
@@ -63,7 +63,7 @@ export default function ImportarPage() {
             <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-text-tertiary" />
             <input
               type="url"
-              placeholder="pinterest.com/usuario/tablero"
+              placeholder="pinterest.com/usuario/tablero o pin.it/..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               className="w-full pl-11 pr-4 py-3.5 rounded-lg border border-border-default text-[15px] text-text-primary placeholder:text-text-tertiary outline-none focus:border-accent-red focus:ring-1 focus:ring-accent-red transition-colors"

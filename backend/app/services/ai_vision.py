@@ -33,9 +33,12 @@ async def analyze_outfit_image(image_url: str) -> dict:
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY no está configurada")
 
-    # Descargar la imagen
+    # Descargar la imagen (Pinterest requiere User-Agent válido)
     async with httpx.AsyncClient(timeout=30.0) as http_client:
-        resp = await http_client.get(image_url)
+        resp = await http_client.get(image_url, headers={
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        })
         resp.raise_for_status()
         image_bytes = resp.content
         content_type = resp.headers.get("content-type", "image/jpeg")
@@ -49,7 +52,7 @@ async def analyze_outfit_image(image_url: str) -> dict:
     )
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash-preview-05-20",
+        model="gemini-2.5-flash",
         contents=[OUTFIT_ANALYSIS_PROMPT, image_part],
         config=genai.types.GenerateContentConfig(
             response_mime_type="application/json",

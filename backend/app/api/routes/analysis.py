@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import func as sa_func, select
+from sqlalchemy import delete, func as sa_func, select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, DBSession
@@ -38,6 +38,9 @@ async def analyze_board(
             status_code=status.HTTP_409_CONFLICT,
             detail="El tablero ya está siendo analizado",
         )
+
+    # Borrar outfits anteriores para re-análisis limpio (CASCADE elimina garments y products)
+    await db.execute(delete(Outfit).where(Outfit.board_id == board_id))
 
     # Cambiar status a analyzing
     board.status = "analyzing"

@@ -86,14 +86,14 @@ alembic downgrade -1
 
 ## Archivos de entorno
 
-- **`backend/.env.example`** — Plantilla con todas las variables necesarias (se commitea al repo)
-- **`backend/.env`** — Copia de `.env.example` con valores reales (NO se commitea)
-- **`frontend/.env.local`** — Variable `NEXT_PUBLIC_API_URL` para desarrollo local (convención Next.js, NO se commitea)
+Todos los archivos de entorno están en la **raíz del proyecto** (un solo `.env` para backend y frontend):
+
+- **`.env.example`** — Plantilla con todas las variables necesarias (se commitea al repo)
+- **`.env`** — Copia de `.env.example` con valores reales (NO se commitea)
 
 Setup:
 ```bash
-cp backend/.env.example backend/.env   # Rellenar con valores reales
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > frontend/.env.local
+cp .env.example .env   # Rellenar con valores reales
 ```
 
 ## Dockerización

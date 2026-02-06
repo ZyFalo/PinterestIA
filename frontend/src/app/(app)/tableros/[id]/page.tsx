@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { RefreshCw } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import { boards as boardsApi } from "@/lib/api";
 import type { Board, Outfit } from "@/lib/types";
@@ -103,6 +104,17 @@ export default function TableroDetallePage() {
           >
             Ver Tendencias
           </Link>
+
+          {/* Reanalizar Button */}
+          {(board.status === "completed" || board.status === "failed") && (
+            <Link
+              href={ROUTES.progreso(board.id)}
+              className="w-full flex items-center justify-center gap-2 border border-accent-red text-accent-red text-[14px] py-3 rounded-xl hover:bg-accent-red hover:text-white transition-colors"
+            >
+              <RefreshCw size={16} />
+              Reanalizar tablero
+            </Link>
+          )}
         </div>
 
         {/* Right - Outfit Grid */}

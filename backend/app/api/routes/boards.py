@@ -7,23 +7,36 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import CurrentUser, DBSession
 from app.models.board import Board
 from app.schemas.board import BoardCreate, BoardDetail, BoardResponse
-from app.services.pinterest import validate_pinterest_url
+from app.services.pinterest import resolve_pinterest_url, validate_pinterest_url
 
 router = APIRouter(prefix="/api/boards", tags=["boards"])
 
 
 @router.post("/", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)
 async def create_board(data: BoardCreate, current_user: CurrentUser, db: DBSession):
-    if not validate_pinterest_url(data.pinterest_url):
+    # Resolver URLs cortas de Pinterest (pin.it/...)
+    resolved_url = await resolve_pinterest_url(data.pinterest_url)
+
+    if not validate_pinterest_url(resolved_url):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="URL de Pinterest inválida. Formato esperado: https://pinterest.com/usuario/tablero",
+            detail="URL de Pinterest inválida. Formato esperado: https://pinterest.com/usuario/tablero o https://pin.it/...",
+        )
+
+    # Verificar que el usuario no tenga ya un tablero con esta URL
+    existing = await db.execute(
+        select(Board).where(Board.user_id == current_user.id, Board.pinterest_url == resolved_url)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ya tienes un tablero con esta URL de Pinterest",
         )
 
     board = Board(
         user_id=current_user.id,
-        name=data.name or data.pinterest_url.rstrip("/").split("/")[-1].replace("-", " ").title(),
-        pinterest_url=data.pinterest_url,
+        name=data.name or resolved_url.rstrip("/").split("/")[-1].replace("-", " ").title(),
+        pinterest_url=resolved_url,
     )
     db.add(board)
     await db.commit()

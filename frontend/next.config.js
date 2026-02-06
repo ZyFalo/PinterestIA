@@ -1,3 +1,9 @@
+const path = require("path");
+const { loadEnvConfig } = require("@next/env");
+
+// Cargar .env desde la raíz del proyecto
+loadEnvConfig(path.resolve(__dirname, ".."));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
