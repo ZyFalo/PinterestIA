@@ -85,7 +85,7 @@ export default function InicioPage() {
       {/* Boards Grid */}
       <div className="grid grid-cols-3 gap-6">
         {filteredBoards.map((board) => (
-          <BoardCard key={board.id} board={board} />
+          <BoardCard key={board.id} board={board} onDelete={(id) => setBoardsList((prev) => prev.filter((b) => b.id !== id))} />
         ))}
       </div>
 
