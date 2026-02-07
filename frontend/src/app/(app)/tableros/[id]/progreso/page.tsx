@@ -92,6 +92,7 @@ export default function ProgresoPage() {
   ]);
   const [error, setError] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
+  const [analyzeReady, setAnalyzeReady] = useState(false);
   const analyzeStarted = useRef(false);
 
   // Effect 1: Lanzar análisis (fire-once, sobrevive Strict Mode)
@@ -99,15 +100,20 @@ export default function ProgresoPage() {
     if (analyzeStarted.current) return;
     analyzeStarted.current = true;
 
-    boardsApi.analyze(boardId).catch((e) => {
-      if (e?.detail?.includes("ya está siendo analizado")) return;
-      setError(e.detail || "Error al iniciar el análisis");
-    });
+    boardsApi.analyze(boardId)
+      .then(() => setAnalyzeReady(true))
+      .catch((e) => {
+        if (e?.detail?.includes("ya está siendo analizado")) {
+          setAnalyzeReady(true);
+          return;
+        }
+        setError(e.detail || "Error al iniciar el análisis");
+      });
   }, [boardId]);
 
-  // Effect 2: Polling cada 2s (se re-monta correctamente con Strict Mode)
+  // Effect 2: Polling cada 2s — solo inicia cuando analyze ha respondido
   useEffect(() => {
-    if (isCompleted || error) return;
+    if (!analyzeReady || isCompleted || error) return;
     let active = true;
     let intervalId: ReturnType<typeof setInterval>;
 
@@ -136,7 +142,7 @@ export default function ProgresoPage() {
       active = false;
       clearInterval(intervalId);
     };
-  }, [boardId, isCompleted, error]);
+  }, [boardId, analyzeReady, isCompleted, error]);
 
   // Effect 3: Redirección automática al completar
   useEffect(() => {
@@ -281,6 +287,7 @@ export default function ProgresoPage() {
             <button
               onClick={() => {
                 analyzeStarted.current = false;
+                setAnalyzeReady(false);
                 setError("");
                 setIsCompleted(false);
                 setProgress(0);

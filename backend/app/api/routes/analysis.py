@@ -90,7 +90,7 @@ async def _evaluate_garment_filter(
                 result_ids = result_ids | next_ids
     return result_ids
 
-GEMINI_CONCURRENCY = 10
+GEMINI_CONCURRENCY = 3
 
 
 async def _run_analysis(board_id: uuid.UUID, user_id: uuid.UUID) -> None:
