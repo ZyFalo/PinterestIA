@@ -15,7 +15,8 @@ export interface Board {
   pinterestUrl: string;
   imageUrl: string | null;
   pinsCount: number;
-  status: "completed" | "analyzing" | "pending" | "failed";
+  pinsAnalyzedCount?: number;
+  status: "completed" | "analyzing" | "scraping" | "pending" | "failed";
   analyzedAt: string | null;
   createdAt: string;
   outfits?: Outfit[];
@@ -81,11 +82,17 @@ export interface AuthToken {
 }
 
 export interface AnalysisResult {
-  status: string;
+  message: string;
   boardId: string;
+}
+
+export interface AnalysisStatus {
+  status: string;
+  phase: "scraping" | "analyzing" | "completed" | "failed" | "pending";
+  pinsTotal: number;
+  pinsAnalyzed: number;
   outfitsCreated: number;
   garmentsCreated: number;
-  pinsScraped: number;
 }
 
 export interface ApiError {

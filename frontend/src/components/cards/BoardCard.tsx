@@ -18,8 +18,29 @@ export default function BoardCard({ board, onDelete }: BoardCardProps) {
   const router = useRouter();
   const isCompleted = board.status === "completed";
   const isFailed = board.status === "failed";
+  const isInProgress = board.status === "scraping" || board.status === "analyzing";
   const canReanalyze = isCompleted || isFailed;
   const outfitsCount = board.outfits?.length ?? board.outfitsCount ?? 0;
+  const href = isInProgress ? ROUTES.progreso(board.id) : ROUTES.tablero(board.id);
+
+  const getStatusLabel = () => {
+    switch (board.status) {
+      case "completed": return "Completado";
+      case "failed": return "Error";
+      case "scraping": return "Obteniendo...";
+      case "analyzing": return "Analizando...";
+      default: return "Pendiente";
+    }
+  };
+
+  const getStatusTooltip = () => {
+    if (board.status === "scraping") return "Obteniendo imágenes del tablero...";
+    if (board.status === "analyzing") {
+      const pct = board.pinsCount > 0 ? Math.round(((board.pinsAnalyzedCount ?? 0) / board.pinsCount) * 100) : 0;
+      return `Analizando: ${board.pinsAnalyzedCount ?? 0}/${board.pinsCount} (${pct}%)`;
+    }
+    return "";
+  };
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -49,7 +70,7 @@ export default function BoardCard({ board, onDelete }: BoardCardProps) {
 
   return (
     <>
-      <Link href={ROUTES.tablero(board.id)}>
+      <Link href={href}>
         <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow cursor-pointer">
           <div className="relative h-[180px] overflow-hidden bg-bg-muted">
             {board.imageUrl ? (
@@ -91,21 +112,18 @@ export default function BoardCard({ board, onDelete }: BoardCardProps) {
                 {outfitsCount} outfits
               </span>
               <span
+                title={getStatusTooltip()}
                 className={`text-[11px] font-medium px-2 py-[3px] rounded ${
                   isCompleted
                     ? "bg-[#E8F5E9] text-[#00C853]"
                     : isFailed
                     ? "bg-red-50 text-red-600"
-                    : "bg-[#FFF3E0] text-[#FFA000]"
+                    : isInProgress
+                    ? "bg-[#FFF3E0] text-[#FFA000]"
+                    : "bg-gray-100 text-gray-500"
                 }`}
               >
-                {isCompleted
-                  ? "Completado"
-                  : isFailed
-                  ? "Error"
-                  : board.status === "analyzing"
-                  ? "Analizando"
-                  : "Pendiente"}
+                {getStatusLabel()}
               </span>
             </div>
           </div>
