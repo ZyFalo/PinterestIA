@@ -29,3 +29,7 @@ class Outfit(Base):
     garments: Mapped[list["Garment"]] = relationship(  # noqa: F821
         back_populates="outfit", cascade="all, delete-orphan"
     )
+
+    @property
+    def garments_count(self) -> int:
+        return len(self.garments)

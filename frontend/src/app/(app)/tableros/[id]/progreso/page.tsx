@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Check, Loader2, X } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
@@ -93,51 +93,57 @@ export default function ProgresoPage() {
   const [error, setError] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
   const analyzeStarted = useRef(false);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const stopPolling = useCallback(() => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-  }, []);
-
-  const pollStatus = useCallback(async () => {
-    try {
-      const data = await boardsApi.status(boardId);
-
-      setPhases(derivePhases(data));
-      setProgress(deriveProgress(data));
-
-      if (data.status === "completed") {
-        stopPolling();
-        setIsCompleted(true);
-      } else if (data.status === "failed") {
-        stopPolling();
-        setError("El análisis ha fallado. Intenta nuevamente.");
-      }
-    } catch {
-      // Si falla el polling, no detenerlo — reintentar
-    }
-  }, [boardId, stopPolling]);
-
+  // Effect 1: Lanzar análisis (fire-once, sobrevive Strict Mode)
   useEffect(() => {
     if (analyzeStarted.current) return;
     analyzeStarted.current = true;
 
-    // Fire-and-forget: lanzar análisis (retorna 202)
     boardsApi.analyze(boardId).catch((e) => {
-      // 409 = ya se está analizando, continuar con polling
       if (e?.detail?.includes("ya está siendo analizado")) return;
       setError(e.detail || "Error al iniciar el análisis");
     });
+  }, [boardId]);
 
-    // Iniciar polling cada 2 segundos
-    pollStatus();
-    pollingRef.current = setInterval(pollStatus, 2000);
+  // Effect 2: Polling cada 2s (se re-monta correctamente con Strict Mode)
+  useEffect(() => {
+    if (isCompleted || error) return;
+    let active = true;
+    let intervalId: ReturnType<typeof setInterval>;
 
-    return () => stopPolling();
-  }, [boardId, pollStatus, stopPolling]);
+    const poll = async () => {
+      try {
+        const data = await boardsApi.status(boardId);
+        if (!active) return;
+        setPhases(derivePhases(data));
+        setProgress(deriveProgress(data));
+        if (data.status === "completed") setIsCompleted(true);
+        else if (data.status === "failed")
+          setError("El análisis ha fallado. Intenta nuevamente.");
+      } catch (e: unknown) {
+        // 401 = sesión expirada, detener polling (AuthGuard redirige a login)
+        const err = e as { status?: number };
+        if (err?.status === 401) {
+          active = false;
+          clearInterval(intervalId);
+        }
+      }
+    };
+
+    poll();
+    intervalId = setInterval(poll, 2000);
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [boardId, isCompleted, error]);
+
+  // Effect 3: Redirección automática al completar
+  useEffect(() => {
+    if (!isCompleted) return;
+    const t = setTimeout(() => router.push(ROUTES.tablero(boardId)), 1500);
+    return () => clearTimeout(t);
+  }, [isCompleted, boardId, router]);
 
   return (
     <div className="h-full flex items-center justify-center px-[120px] py-10">
@@ -274,6 +280,7 @@ export default function ProgresoPage() {
           <div className="flex gap-3">
             <button
               onClick={() => {
+                analyzeStarted.current = false;
                 setError("");
                 setIsCompleted(false);
                 setProgress(0);
@@ -282,10 +289,6 @@ export default function ProgresoPage() {
                   { title: "Analizando con IA", subtitle: "Pendiente", status: "pending" },
                   { title: "Proceso completado", subtitle: "Pendiente", status: "pending" },
                 ]);
-                analyzeStarted.current = false;
-                boardsApi.analyze(boardId).catch(() => {});
-                pollStatus();
-                pollingRef.current = setInterval(pollStatus, 2000);
               }}
               className="px-6 py-2.5 bg-accent-red hover:bg-accent-red-dark text-white text-[14px] rounded-lg transition-colors"
             >

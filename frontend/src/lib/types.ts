@@ -65,10 +65,19 @@ export interface Product {
 }
 
 export interface GarmentRank {
-  type: string;
-  color: string | null;
+  name: string;
   count: number;
-  percentage?: number;
+}
+
+export interface GarmentTypeRank {
+  type: string;
+  count: number;
+  garments: GarmentRank[];
+}
+
+export interface ColorRank {
+  color: string;
+  count: number;
 }
 
 export interface AnalysisPhase {

@@ -40,7 +40,7 @@ export default function GarmentCard({ garment }: GarmentCardProps) {
           </h4>
           <p className="text-[13px] text-text-secondary mt-0.5">
             {garment.type}
-            {garment.material ? ` · ${garment.material}` : ""}
+            {garment.color ? ` · ${garment.color}` : ""}
           </p>
           <div className="flex items-center gap-1.5 mt-2">
             {garment.season && (

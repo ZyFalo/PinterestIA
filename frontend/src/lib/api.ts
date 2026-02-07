@@ -1,12 +1,14 @@
 import type {
+  AnalysisResult,
+  AnalysisStatus,
   AuthToken,
   Board,
+  ColorRank,
   Garment,
-  GarmentRank,
+  GarmentTypeRank,
   Outfit,
   Product,
   User,
-  AnalysisResult,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -52,8 +54,17 @@ async function request<T>(
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
 
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+      throw { detail: "Sesión expirada", status: 401 };
+    }
     const body = await res.json().catch(() => ({ detail: "Error de conexión" }));
-    throw body;
+    let detail = body.detail ?? "Error desconocido";
+    if (Array.isArray(detail)) {
+      detail = detail.map((e: { msg?: string }) => e.msg || "").join(". ");
+    }
+    throw { detail, status: res.status };
   }
 
   if (res.status === 204) return undefined as T;
@@ -87,8 +98,36 @@ export const boards = {
     request<void>(`/api/boards/${id}`, { method: "DELETE" }),
   analyze: (id: string) =>
     request<AnalysisResult>(`/api/boards/${id}/analyze`, { method: "POST" }),
-  outfits: (id: string) => request<Outfit[]>(`/api/boards/${id}/outfits`),
-  trends: (id: string) => request<GarmentRank[]>(`/api/boards/${id}/trends`),
+  status: (id: string) =>
+    request<AnalysisStatus>(`/api/boards/${id}/status`),
+  outfits: (id: string, opts?: { garmentNames?: string[]; garmentColors?: string[]; garmentType?: string; connectors?: string[] }) => {
+    const params = new URLSearchParams();
+    if (opts?.garmentNames?.length) {
+      opts.garmentNames.forEach((n) => params.append("garment_name", n));
+      if (opts.connectors?.length) {
+        params.set("connectors", opts.connectors.join(","));
+      }
+    }
+    if (opts?.garmentColors?.length) {
+      opts.garmentColors.forEach((c) => params.append("garment_color", c));
+    }
+    if (!opts?.garmentNames?.length && !opts?.garmentColors?.length && opts?.garmentType) {
+      params.set("garment_type", opts.garmentType);
+    }
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return request<Outfit[]>(`/api/boards/${id}/outfits${qs}`);
+  },
+  trends: (id: string) => request<GarmentTypeRank[]>(`/api/boards/${id}/trends`),
+  colorTrends: (id: string, opts?: { garmentNames?: string[]; connectors?: string[] }) => {
+    const params = new URLSearchParams();
+    if (opts?.garmentNames?.length) {
+      opts.garmentNames.forEach((n) => params.append("garment_name", n));
+      if (opts?.connectors?.length)
+        params.set("connectors", opts.connectors.join(","));
+    }
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return request<ColorRank[]>(`/api/boards/${id}/color-trends${qs}`);
+  },
 };
 
 export const outfits = {

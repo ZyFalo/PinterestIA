@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, DBSession
 from app.models.board import Board
+from app.models.outfit import Outfit
 from app.schemas.board import BoardCreate, BoardDetail, BoardResponse
 from app.services.pinterest import resolve_pinterest_url, validate_pinterest_url
 
@@ -48,6 +49,7 @@ async def create_board(data: BoardCreate, current_user: CurrentUser, db: DBSessi
 async def list_boards(current_user: CurrentUser, db: DBSession):
     result = await db.execute(
         select(Board)
+        .options(selectinload(Board.outfits))
         .where(Board.user_id == current_user.id)
         .order_by(Board.created_at.desc())
     )
@@ -58,7 +60,7 @@ async def list_boards(current_user: CurrentUser, db: DBSession):
 async def get_board(board_id: uuid.UUID, current_user: CurrentUser, db: DBSession):
     result = await db.execute(
         select(Board)
-        .options(selectinload(Board.outfits))
+        .options(selectinload(Board.outfits).selectinload(Outfit.garments))
         .where(Board.id == board_id, Board.user_id == current_user.id)
     )
     board = result.scalar_one_or_none()

@@ -35,9 +35,9 @@ export default function InicioPage() {
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} onRetry={fetchBoards} />;
 
-  const filteredBoards = boardsList.filter((b) =>
-    b.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredBoards = boardsList
+    .filter((b) => b.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => (b.outfitsCount ?? 0) - (a.outfitsCount ?? 0));
 
   return (
     <div className="p-10 px-[120px]">

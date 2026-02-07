@@ -1,3 +1,5 @@
+import asyncio
+
 import cloudinary
 import cloudinary.uploader
 
@@ -38,7 +40,7 @@ async def upload_image_from_url(
         options["public_id"] = filename
 
     try:
-        result = cloudinary.uploader.upload(image_url, **options)
+        result = await asyncio.to_thread(cloudinary.uploader.upload, image_url, **options)
         return result.get("secure_url")
     except Exception:
         return None

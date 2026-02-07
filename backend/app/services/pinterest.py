@@ -78,12 +78,9 @@ def _extract_pins_from_list(
     image_urls: list[str],
     pin_urls: list[str],
     seen: set[str],
-    max_pins: int,
 ) -> None:
     """Extrae pins reales de una lista, ignorando story modules y duplicados."""
     for item in items:
-        if len(image_urls) >= max_pins:
-            break
         if not isinstance(item, dict):
             continue
         # Filtrar story modules e items sin imágenes
@@ -103,7 +100,7 @@ def _extract_pins_from_list(
 # Función principal de scraping
 # ---------------------------------------------------------------------------
 
-async def scrape_board_images(url: str, max_pins: int = 200) -> dict:
+async def scrape_board_images(url: str) -> dict:
     """
     Scrapea imágenes de un tablero público de Pinterest con paginación.
 
@@ -173,6 +170,7 @@ async def scrape_board_images(url: str, max_pins: int = 200) -> dict:
             app_version = pws_data.get("appVersion")
 
         # Info del tablero
+        detected_pin_count: int | None = None
         boards = redux.get("boards", {})
         for bid, bdata in boards.items():
             board_id = bid
@@ -180,6 +178,8 @@ async def scrape_board_images(url: str, max_pins: int = 200) -> dict:
                 board_name = bdata["name"]
             if bdata.get("image_cover_url"):
                 cover_image = bdata["image_cover_url"]
+            if bdata.get("pin_count"):
+                detected_pin_count = bdata["pin_count"]
             break
 
         # ── Paso 3: Extraer pins iniciales de BoardFeedResource ──
@@ -189,7 +189,7 @@ async def scrape_board_images(url: str, max_pins: int = 200) -> dict:
         for _key, resource in board_feed_resources.items():
             feed_data = resource.get("data", [])
             _extract_pins_from_list(
-                feed_data, image_urls, pin_urls, seen, max_pins
+                feed_data, image_urls, pin_urls, seen
             )
             bookmark = resource.get("nextBookmark")
             break
@@ -198,8 +198,6 @@ async def scrape_board_images(url: str, max_pins: int = 200) -> dict:
         if not image_urls:
             pins_store = redux.get("pins", {})
             for pin_id, pin_obj in pins_store.items():
-                if len(image_urls) >= max_pins:
-                    break
                 img_url = _get_pin_image_url(pin_obj)
                 if img_url and img_url not in seen:
                     seen.add(img_url)
@@ -211,7 +209,7 @@ async def scrape_board_images(url: str, max_pins: int = 200) -> dict:
         # ── Paso 4: Paginar para obtener el resto de los pins ──
         csrf_token = client.cookies.get("csrftoken", domain=".pinterest.com") or ""
 
-        while bookmark and bookmark != "-end-" and len(image_urls) < max_pins:
+        while bookmark and bookmark != "-end-":
             api_headers = {
                 "User-Agent": _USER_AGENT,
                 "Accept": "application/json",
@@ -260,7 +258,7 @@ async def scrape_board_images(url: str, max_pins: int = 200) -> dict:
 
                 prev_count = len(image_urls)
                 _extract_pins_from_list(
-                    page_pins, image_urls, pin_urls, seen, max_pins
+                    page_pins, image_urls, pin_urls, seen
                 )
 
                 # Si no se agregaron nuevos pins, evitar loop infinito
@@ -287,4 +285,5 @@ async def scrape_board_images(url: str, max_pins: int = 200) -> dict:
         "pin_urls": pin_urls,
         "cover_image": cover_image,
         "pins_count": len(image_urls),
+        "detected_pin_count": detected_pin_count or len(image_urls),
     }

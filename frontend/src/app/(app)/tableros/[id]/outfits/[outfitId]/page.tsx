@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Share2 } from "lucide-react";
+
 import { outfits as outfitsApi } from "@/lib/api";
 import type { Outfit } from "@/lib/types";
 import GarmentCard from "@/components/cards/GarmentCard";
@@ -51,15 +51,9 @@ export default function OutfitDetallePage() {
       {/* Right - Garments Column */}
       <div className="flex-1 flex flex-col gap-5">
         {/* Title Row */}
-        <div className="flex items-center justify-between">
-          <h1 className="font-playfair text-[24px] font-bold text-text-primary">
-            Prendas identificadas
-          </h1>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border-default text-text-secondary text-[13px] hover:bg-bg-muted transition-colors">
-            <Share2 className="w-4 h-4" />
-            Compartir
-          </button>
-        </div>
+        <h1 className="font-playfair text-[24px] font-bold text-text-primary">
+          Prendas identificadas
+        </h1>
 
         {/* Garment Cards */}
         <div className="flex flex-col gap-4">

@@ -19,6 +19,7 @@ class BoardResponse(BaseModel):
     pins_count: int
     pins_uploaded: int = 0
     pins_analyzed_count: int = 0
+    outfits_count: int = 0
     status: str
     analyzed_at: datetime | None = None
     created_at: datetime

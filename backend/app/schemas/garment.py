@@ -26,6 +26,16 @@ class GarmentDetail(GarmentResponse):
 
 
 class GarmentRank(BaseModel):
+    name: str
+    count: int
+
+
+class GarmentTypeRank(BaseModel):
     type: str
-    color: str | None = None
+    count: int
+    garments: list[GarmentRank]
+
+
+class ColorRank(BaseModel):
+    color: str
     count: int

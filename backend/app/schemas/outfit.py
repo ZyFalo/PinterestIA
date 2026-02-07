@@ -13,6 +13,7 @@ class OutfitResponse(BaseModel):
     style: str | None = None
     season: str | None = None
     source_pin_url: str | None = None
+    garments_count: int = 0
     created_at: datetime
 
     model_config = {"from_attributes": True}
