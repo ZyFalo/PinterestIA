@@ -11,5 +11,12 @@ __pycache__/
 node_modules/
 .next/
 
+# TypeScript
+*.tsbuildinfo
+
+# Herramientas locales
+.agents/
+.claude/
+
 # Sistema
 .DS_Store
