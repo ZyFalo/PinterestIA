@@ -16,7 +16,6 @@ class Board(Base):
     pinterest_url: Mapped[str] = mapped_column(Text)
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     pins_count: Mapped[int] = mapped_column(Integer, default=0)
-    pins_uploaded: Mapped[int] = mapped_column(Integer, default=0)
     pins_analyzed_count: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(20), default="pending")
     analyzed_at: Mapped[datetime | None] = mapped_column(

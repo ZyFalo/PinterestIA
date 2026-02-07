@@ -17,7 +17,6 @@ class BoardResponse(BaseModel):
     pinterest_url: str
     image_url: str | None = None
     pins_count: int
-    pins_uploaded: int = 0
     pins_analyzed_count: int = 0
     outfits_count: int = 0
     status: str
@@ -38,3 +37,13 @@ class AnalysisStatus(BaseModel):
     pins_analyzed: int
     outfits_created: int
     garments_created: int
+
+
+class FacetItem(BaseModel):
+    name: str
+    count: int
+
+
+class OutfitFacets(BaseModel):
+    seasons: list[FacetItem]
+    styles: list[FacetItem]

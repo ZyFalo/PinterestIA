@@ -691,7 +691,7 @@ export default function TendenciasPage() {
           <div className="columns-[290px] gap-4">
             {filteredOutfits.map((outfit) => (
               <div key={outfit.id} className="break-inside-avoid mb-4">
-                <OutfitCard outfit={outfit} boardId={boardId} />
+                <OutfitCard outfit={outfit} boardId={boardId} from="tendencias" />
               </div>
             ))}
           </div>

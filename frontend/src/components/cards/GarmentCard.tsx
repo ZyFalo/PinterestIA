@@ -25,15 +25,6 @@ export default function GarmentCard({ garment }: GarmentCardProps) {
   return (
     <Link href={ROUTES.prenda(garment.id)}>
       <div className="bg-[#F8F8F8] rounded-xl p-4 flex items-center gap-3 border-l-[3px] border-accent-red hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow cursor-pointer">
-        {garment.imageUrl && (
-          <div className="w-[72px] h-[72px] rounded-lg overflow-hidden flex-shrink-0">
-            <img
-              src={garment.imageUrl}
-              alt={garment.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-[16px] text-text-primary">
             {garment.name}

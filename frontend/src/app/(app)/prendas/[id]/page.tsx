@@ -59,17 +59,8 @@ export default function PrendaDetallePage() {
     <div className="flex h-full p-8 px-16 gap-10">
       {/* Left - Info Card */}
       <div className="w-[420px] flex-shrink-0">
-        <div className="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6 flex gap-5">
-          {garment.imageUrl && (
-            <div className="w-[140px] h-[140px] rounded-xl overflow-hidden flex-shrink-0">
-              <img
-                src={garment.imageUrl}
-                alt={garment.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="flex-1 flex flex-col gap-3">
+        <div className="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-6">
+          <div className="flex flex-col gap-3">
             <h1 className="font-playfair text-[24px] font-bold text-text-primary">
               {garment.name}
             </h1>

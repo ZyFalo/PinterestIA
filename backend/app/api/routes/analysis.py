@@ -12,7 +12,7 @@ from app.core.database import async_session
 from app.models.board import Board
 from app.models.garment import Garment
 from app.models.outfit import Outfit
-from app.schemas.board import AnalysisStatus
+from app.schemas.board import AnalysisStatus, FacetItem, OutfitFacets
 from collections import defaultdict
 
 from app.schemas.garment import ColorRank, GarmentRank, GarmentTypeRank
@@ -294,6 +294,8 @@ async def list_board_outfits(
     garment_color: list[str] | None = Query(None),
     garment_type: str | None = None,
     connectors: str | None = None,
+    outfit_season: list[str] | None = Query(None),
+    outfit_style: list[str] | None = Query(None),
 ):
     board_result = await db.execute(
         select(Board.id).where(
@@ -352,9 +354,47 @@ async def list_board_outfits(
     elif garment_type:
         query = query.join(Garment).where(Garment.type == garment_type).distinct()
 
+    if outfit_season and len(outfit_season) > 0:
+        query = query.where(Outfit.season.in_(outfit_season))
+    if outfit_style and len(outfit_style) > 0:
+        query = query.where(Outfit.style.in_(outfit_style))
+
     query = query.order_by(Outfit.created_at)
     result = await db.execute(query)
     return result.scalars().all()
+
+
+@router.get("/boards/{board_id}/outfit-facets", response_model=OutfitFacets)
+async def get_outfit_facets(
+    board_id: uuid.UUID, current_user: CurrentUser, db: DBSession
+):
+    board_result = await db.execute(
+        select(Board.id).where(
+            Board.id == board_id, Board.user_id == current_user.id
+        )
+    )
+    if board_result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Tablero no encontrado"
+        )
+
+    season_result = await db.execute(
+        select(Outfit.season, sa_func.count().label("count"))
+        .where(Outfit.board_id == board_id, Outfit.season.isnot(None))
+        .group_by(Outfit.season)
+        .order_by(sa_func.count().desc())
+    )
+    style_result = await db.execute(
+        select(Outfit.style, sa_func.count().label("count"))
+        .where(Outfit.board_id == board_id, Outfit.style.isnot(None))
+        .group_by(Outfit.style)
+        .order_by(sa_func.count().desc())
+    )
+
+    return OutfitFacets(
+        seasons=[FacetItem(name=r.season, count=r.count) for r in season_result.all()],
+        styles=[FacetItem(name=r.style, count=r.count) for r in style_result.all()],
+    )
 
 
 @router.get("/outfits/{outfit_id}", response_model=OutfitDetail)

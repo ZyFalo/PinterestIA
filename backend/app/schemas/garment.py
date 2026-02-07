@@ -14,7 +14,6 @@ class GarmentResponse(BaseModel):
     material: str | None = None
     style: str | None = None
     season: str | None = None
-    image_url: str | None = None
     confidence: float | None = None
     created_at: datetime
 

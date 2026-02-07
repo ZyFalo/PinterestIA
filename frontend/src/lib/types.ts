@@ -28,7 +28,6 @@ export interface Outfit {
   id: string;
   boardId?: string;
   imageUrl: string;
-  cloudinaryUrl: string | null;
   style: string | null;
   season: string | null;
   sourcePinUrl: string | null;
@@ -46,7 +45,6 @@ export interface Garment {
   material: string | null;
   style: string | null;
   season: string | null;
-  imageUrl: string | null;
   confidence: number | null;
   createdAt: string;
   products?: Product[];
@@ -102,6 +100,16 @@ export interface AnalysisStatus {
   pinsAnalyzed: number;
   outfitsCreated: number;
   garmentsCreated: number;
+}
+
+export interface FacetItem {
+  name: string;
+  count: number;
+}
+
+export interface OutfitFacets {
+  seasons: FacetItem[];
+  styles: FacetItem[];
 }
 
 export interface ApiError {

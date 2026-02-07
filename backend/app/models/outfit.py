@@ -15,7 +15,6 @@ class Outfit(Base):
         ForeignKey("boards.id", ondelete="CASCADE"), index=True
     )
     image_url: Mapped[str] = mapped_column(Text)
-    cloudinary_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     style: Mapped[str | None] = mapped_column(String(50), nullable=True)
     season: Mapped[str | None] = mapped_column(String(50), nullable=True)
     source_pin_url: Mapped[str | None] = mapped_column(Text, nullable=True)

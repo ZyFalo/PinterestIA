@@ -9,7 +9,6 @@ from app.schemas.garment import GarmentResponse
 class OutfitResponse(BaseModel):
     id: uuid.UUID
     image_url: str
-    cloudinary_url: str | None = None
     style: str | None = None
     season: str | None = None
     source_pin_url: str | None = None

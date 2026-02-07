@@ -7,6 +7,7 @@ import type {
   Garment,
   GarmentTypeRank,
   Outfit,
+  OutfitFacets,
   Product,
   User,
 } from "./types";
@@ -100,7 +101,7 @@ export const boards = {
     request<AnalysisResult>(`/api/boards/${id}/analyze`, { method: "POST" }),
   status: (id: string) =>
     request<AnalysisStatus>(`/api/boards/${id}/status`),
-  outfits: (id: string, opts?: { garmentNames?: string[]; garmentColors?: string[]; garmentType?: string; connectors?: string[] }) => {
+  outfits: (id: string, opts?: { garmentNames?: string[]; garmentColors?: string[]; garmentType?: string; connectors?: string[]; outfitSeason?: string[]; outfitStyle?: string[] }) => {
     const params = new URLSearchParams();
     if (opts?.garmentNames?.length) {
       opts.garmentNames.forEach((n) => params.append("garment_name", n));
@@ -114,9 +115,17 @@ export const boards = {
     if (!opts?.garmentNames?.length && !opts?.garmentColors?.length && opts?.garmentType) {
       params.set("garment_type", opts.garmentType);
     }
+    if (opts?.outfitSeason?.length) {
+      opts.outfitSeason.forEach((s) => params.append("outfit_season", s));
+    }
+    if (opts?.outfitStyle?.length) {
+      opts.outfitStyle.forEach((s) => params.append("outfit_style", s));
+    }
     const qs = params.toString() ? `?${params.toString()}` : "";
     return request<Outfit[]>(`/api/boards/${id}/outfits${qs}`);
   },
+  outfitFacets: (id: string) =>
+    request<OutfitFacets>(`/api/boards/${id}/outfit-facets`),
   trends: (id: string) => request<GarmentTypeRank[]>(`/api/boards/${id}/trends`),
   colorTrends: (id: string, opts?: { garmentNames?: string[]; connectors?: string[] }) => {
     const params = new URLSearchParams();

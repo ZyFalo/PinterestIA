@@ -5,18 +5,21 @@ import { ROUTES } from "@/lib/constants";
 interface OutfitCardProps {
   outfit: Outfit;
   boardId?: string;
+  from?: string;
 }
 
-export default function OutfitCard({ outfit, boardId }: OutfitCardProps) {
+export default function OutfitCard({ outfit, boardId, from }: OutfitCardProps) {
   const bid = boardId || outfit.boardId || "";
-  const displayImage = outfit.cloudinaryUrl || outfit.imageUrl;
+  const href = from
+    ? `${ROUTES.outfit(bid, outfit.id)}?from=${from}`
+    : ROUTES.outfit(bid, outfit.id);
 
   return (
-    <Link href={ROUTES.outfit(bid, outfit.id)} target="_blank">
+    <Link href={href} target="_blank">
       <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow cursor-pointer">
         <div className="overflow-hidden">
           <img
-            src={displayImage}
+            src={outfit.imageUrl}
             alt={`Outfit ${outfit.style || ""}`}
             className="w-full h-auto object-cover"
           />

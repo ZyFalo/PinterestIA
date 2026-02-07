@@ -6,23 +6,34 @@ Plataforma que analiza tableros de Pinterest con IA para identificar prendas de 
 
 | Capa | Tecnología |
 |---|---|
-| Frontend | Next.js 14 (App Router), Tailwind CSS, PWA mobile-first |
+| Frontend | Next.js 14 (App Router), Tailwind CSS |
 | Backend | Python 3.12+, FastAPI, SQLAlchemy 2.0 async |
 | Base de datos | PostgreSQL 16 (asyncpg) |
 | IA / Visión | Gemini 2.5 Flash (Vision API) |
-| Scraping | Playwright (headless Chromium) |
-| Storage | Cloudinary (CDN + transformaciones) |
+| Scraping | httpx (JSON API + HTML fallback con paginación) |
 | Búsqueda | SerpAPI (Google Shopping) |
 | Infraestructura | Railway (Docker) |
 
-## Flujo principal
+## Funcionalidades principales
+
+- **Importar tableros** — Pegar URL de tablero público de Pinterest
+- **Análisis con IA** — Gemini Vision identifica prendas (tipo, color, material, estilo, temporada) en cada pin
+- **Progreso en tiempo real** — Polling cada 2s con barra de progreso y fases (scraping → análisis → completado)
+- **Dashboard** — Tableros ordenados por cantidad de outfits, búsqueda por nombre, contador de outfits
+- **Detalle de tablero** — Cover image del tablero, grid masonry de outfits ordenados por prendas detectadas
+- **Tendencias** — Ranking de prendas más repetidas agrupadas por tipo (accordion), filtros combinados con conectores AND/OR, búsqueda facetada de colores, paleta de colores interactiva
+- **Detalle de outfit** — Vista de la imagen con listado de prendas identificadas y confianza
+- **Búsqueda de productos** — Productos similares vía SerpAPI (Google Shopping)
+- **Autenticación** — Registro/login con JWT (bcrypt directo)
+
+## Flujo de análisis
 
 1. El usuario ingresa la URL de un tablero público de Pinterest
-2. **Playwright** scrapea las imágenes del tablero
-3. Cada imagen se envía a **Gemini 2.5 Flash Vision** con un prompt estructurado
-4. Gemini devuelve un JSON con las prendas identificadas (tipo, color, material, clima, estilo)
-5. Las prendas se almacenan en **PostgreSQL** y sus imágenes en **Cloudinary**
-6. Se buscan productos similares vía **SerpAPI** (Google Shopping)
+2. **httpx** scrapea las imágenes del tablero (JSON API con paginación + fallback HTML)
+3. Cada imagen se envía concurrentemente a **Gemini 2.5 Flash Vision** (concurrencia: 3) con prompt estructurado
+4. Gemini devuelve JSON con prendas identificadas (tipo, color, material, clima, estilo, confianza)
+5. Las prendas se almacenan en **PostgreSQL** vinculadas a cada outfit
+6. Se pueden buscar productos similares vía **SerpAPI** (Google Shopping)
 
 ## Estructura del proyecto
 
@@ -32,22 +43,20 @@ outfitbase/
 │   ├── app/
 │   │   ├── main.py                  # Entry point FastAPI
 │   │   ├── api/
-│   │   │   ├── routes/              # boards, analysis, products, auth
-│   │   │   └── deps.py              # Dependencias compartidas
-│   │   ├── services/                # pinterest, ai_vision, product_search, cloudinary
-│   │   ├── models/                  # SQLAlchemy models
-│   │   ├── schemas/                 # Pydantic schemas
-│   │   ├── core/                    # config, database, security (JWT)
+│   │   │   ├── routes/              # auth, boards, analysis, products
+│   │   │   └── deps.py              # CurrentUser, DBSession
+│   │   ├── services/                # pinterest, ai_vision, product_search
+│   │   ├── models/                  # User, Board, Outfit, Garment, Product
+│   │   ├── schemas/                 # Pydantic v2 schemas
+│   │   ├── core/                    # config, database, security (JWT+bcrypt)
 │   │   └── prompts/                 # Prompts para Gemini Vision
 │   ├── requirements.txt
-│   ├── Dockerfile
-│   └── .env.example
+│   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── app/                     # Next.js App Router
-│   │   ├── components/
-│   │   ├── lib/
-│   │   └── styles/
+│   │   ├── app/                     # Next.js App Router (login, registro, inicio, tableros, tendencias)
+│   │   ├── components/              # cards/, layout/, ui/
+│   │   └── lib/                     # api.ts, auth-context, types, constants, color-map
 │   ├── package.json
 │   ├── Dockerfile
 │   ├── next.config.js
@@ -55,6 +64,27 @@ outfitbase/
 ├── docker-compose.yml
 └── .gitignore
 ```
+
+## API Endpoints
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/auth/register` | Registro de usuario |
+| POST | `/api/auth/login` | Login (devuelve JWT) |
+| GET | `/api/auth/me` | Usuario actual |
+| GET | `/api/boards` | Listar tableros del usuario |
+| POST | `/api/boards` | Crear tablero |
+| GET | `/api/boards/{id}` | Detalle de tablero |
+| DELETE | `/api/boards/{id}` | Eliminar tablero |
+| POST | `/api/boards/{id}/analyze` | Iniciar análisis |
+| GET | `/api/boards/{id}/status` | Estado del análisis (polling) |
+| GET | `/api/boards/{id}/outfits` | Outfits del tablero (con filtros) |
+| GET | `/api/boards/{id}/trends` | Tendencias de prendas |
+| GET | `/api/boards/{id}/color-trends` | Tendencias de colores (faceted) |
+| GET | `/api/outfits/{id}` | Detalle de outfit |
+| GET | `/api/garments/{id}` | Detalle de prenda |
+| GET | `/api/garments/{id}/products` | Productos similares |
+| POST | `/api/garments/{id}/search-products` | Buscar productos |
 
 ## Requisitos previos
 
@@ -69,12 +99,9 @@ outfitbase/
 git clone https://github.com/ZyFalo/PinterestIA.git
 cd PinterestIA
 
-# Configurar variables de entorno del backend
-cp backend/.env.example backend/.env
-# Editar backend/.env con tus API keys reales
-
-# Configurar variable de entorno del frontend (dev local)
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > frontend/.env.local
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus API keys reales
 ```
 
 ## Desarrollo local
@@ -98,7 +125,6 @@ cd backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-playwright install --with-deps chromium
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -128,9 +154,6 @@ alembic downgrade -1
 | `ALGORITHM` | Auth | Algoritmo JWT (default: `HS256`) |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Auth | Tiempo de expiración del token (default: `30`) |
 | `GEMINI_API_KEY` | Gemini | API key de Google AI Studio |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary | Nombre del cloud |
-| `CLOUDINARY_API_KEY` | Cloudinary | API key |
-| `CLOUDINARY_API_SECRET` | Cloudinary | API secret |
 | `SERPAPI_KEY` | SerpAPI | API key para Google Shopping |
 | `NEXT_PUBLIC_API_URL` | Frontend | URL del backend (solo frontend) |
 
