@@ -24,15 +24,15 @@ async def create_board(data: BoardCreate, current_user: CurrentUser, db: DBSessi
             detail="URL de Pinterest inválida. Formato esperado: https://pinterest.com/usuario/tablero o https://pin.it/...",
         )
 
-    # Verificar que el usuario no tenga ya un tablero con esta URL
+    # Si ya existe un tablero con esta URL, devolver el existente
     existing = await db.execute(
-        select(Board).where(Board.user_id == current_user.id, Board.pinterest_url == resolved_url)
+        select(Board)
+        .options(selectinload(Board.outfits))
+        .where(Board.user_id == current_user.id, Board.pinterest_url == resolved_url)
     )
-    if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ya tienes un tablero con esta URL de Pinterest",
-        )
+    existing_board = existing.scalar_one_or_none()
+    if existing_board:
+        return existing_board
 
     board = Board(
         user_id=current_user.id,
@@ -41,7 +41,7 @@ async def create_board(data: BoardCreate, current_user: CurrentUser, db: DBSessi
     )
     db.add(board)
     await db.commit()
-    await db.refresh(board)
+    await db.refresh(board, attribute_names=["outfits"])
     return board
 
 
